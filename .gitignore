@@ -1,0 +1,43 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# SQLite stores -- mutable state, never committed. The mission notebook
+# (missions.db) lives on robin and is the system's own record; it is state,
+# not a build artifact, and it does not belong in git.
+*.db
+*.db-wal
+*.db-shm
+
+# Node / Next.js. Each app also carries its own .gitignore; this is
+# belt-and-suspenders.
+node_modules/
+.pnp
+.pnp.js
+coverage/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Captures, model weights, and run artifacts -- large binaries stay out of git.
+runs/
+snapshots/
+*.pt
+*.tflite
+*.mp4
+*.cache
+
+# Secrets and environment. Nothing here is committed; each box carries its own.
+.env
+.env.local
+*.pem
+
+# misc
+.DS_Store

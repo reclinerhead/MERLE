@@ -1,0 +1,6 @@
+# Shell scripts run on Linux boxes but are edited on Windows. A CRLF shebang
+# line ("/usr/bin/env bash\r") makes the kernel look for an interpreter whose
+# name ends in a carriage return, and the box reports "bad interpreter: no such
+# file or directory" while pointing at a file that plainly exists. Pin LF
+# regardless of the local core.autocrlf setting.
+*.sh text eol=lf

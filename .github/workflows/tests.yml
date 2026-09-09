@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # THIS LIST IS THE WHOLE CONTRACT.
+      #
+      # There is no pytest.ini, no testpaths, and no directory-walk fallback:
+      # a test_*.py that is not named in FILES below silently never runs, and
+      # this job goes green having tested nothing. The predecessor repo was
+      # bitten by exactly this three separate times, each time by a test file
+      # that had existed for months and had never once executed in CI.
+      #
+      # Add new test files here in the same pull request that creates them.
+      - name: pytest
+        run: |
+          FILES=""          # Phase 1 adds test_contracts.py
+          if [ -z "$FILES" ]; then
+            echo "No test files enrolled yet. Nothing to run."
+            exit 0
+          fi
+          pip install pytest jsonschema pyyaml
+          pytest $FILES -q
+
+  # A `web` job joins this file when the MCC v2 app is scaffolded in Phase 4,
+  # mirroring the python job's posture: pnpm install --frozen-lockfile, then
+  # pnpm test, with the working directory set to the app.
