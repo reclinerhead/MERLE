@@ -47,6 +47,20 @@ load the *same* golden example payloads. A schema change that breaks an example
 must break both suites in the same pull request. That is the design, not an
 inconvenience to work around by regenerating the examples.
 
+**Shell scripts committed from Windows land non-executable.** Git on Windows
+records a new file as mode 100644 regardless of intent, so a script added here
+arrives on a Linux box as `-rw-rw-r--` and systemd refuses to spawn it. The
+failure reads as `Permission denied` and `status=203/EXEC` against a path that
+plainly exists, which sends you looking for a missing file rather than a
+missing bit. Set it explicitly in the commit that adds the script:
+
+```
+git update-index --chmod=+x <path>
+```
+
+Verify with `git ls-files -s <path>`, which must print `100755`. The
+`.gitattributes` LF rule is a separate concern and does not cover this.
+
 **The deploy script is shared and role-neutral.** `Servers/autodeploy.sh` is
 configured entirely through environment variables. A box's role is expressed in
 its unit file, never by editing the script. Note that a later `Environment=`
