@@ -242,7 +242,7 @@ Nothing in Track C starts until this passes. A cockpit that can start a rover it
 
 ### B2 — The service
 **Goal.** FastAPI on merle: WebSocket for drive, REST for toggles, telemetry → MQTT.
-**Exit.** `rover-hands.service` enabled, survives a reboot, publishes `rover/<id>/telemetry` at a steady cadence and `rover/<id>/status` retained with a Last Will that flips within seconds of `systemctl stop`. Own venv (the `ugv-env` precedent). `PYTHONUNBUFFERED=1` — the journal is silent without it, and `Servers/Merle.md` says so twice.
+**Exit.** `rover-hands.service` enabled, survives a reboot, publishes `rover/<id>/telemetry` at a steady cadence and `rover/<id>/status` retained with a Last Will that flips within seconds of `systemctl stop`. Own venv (the `ugv-env` precedent). `PYTHONUNBUFFERED=1` — the journal is silent without it, and `toddtech-infrastructure/servers/Merle.md` says so twice.
 **Test contract.** Command validation, clamping, and the timeout are pure and covered. Serial I/O is not (I/O-bound, per CLAUDE.md).
 
 ### B3 — Single command authority

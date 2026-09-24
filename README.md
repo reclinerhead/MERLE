@@ -116,7 +116,7 @@ live in [`docs/design/`](docs/design/).
 | [`docs/design/helm-cockpit-first-draft.md`](docs/design/helm-cockpit-first-draft.md) | The first-draft design record for rover control and the actuator-owning service. |
 | [`docs/design/rover-idea-bank.md`](docs/design/rover-idea-bank.md) | The pre-MERLE rover brainstorm, where the layered-control ideas started. |
 | [`docs/guide/`](docs/guide/) | Component documentation, one spoke per component. |
-| [`Servers/`](Servers/) | Ops runbooks and the deploy watcher. |
+| [`Servers/`](Servers/) | The deploy watcher. The per-host runbooks live in the private `toddtech-infrastructure` repo. |
 
 ## Related
 

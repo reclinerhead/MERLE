@@ -12,7 +12,7 @@ Nothing to document yet. The design record is the epic in the issue tracker and
 the [first-draft design document](../design/helm-cockpit-first-draft.md). The
 hardware this service will own (the driver board's serial protocol, which
 fields it streams, what the Pi can measure about itself, and the vendor stack
-it replaces) is recorded in [`Servers/Merle.md`](../../Servers/Merle.md).
+it replaces) is recorded in `toddtech-infrastructure/servers/Merle.md` (private).
 
 ## The two hard constraints, before anyone touches the rover
 

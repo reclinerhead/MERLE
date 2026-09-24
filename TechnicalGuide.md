@@ -53,8 +53,8 @@ implementation detail.
 
 | Host | Role | Runbook |
 |---|---|---|
-| `robin` | MCC v2 host and robotics lab. Supervisor, recorder, notebook, Tier 3 gateway, Tier 1 Coral inference | [`Servers/Robin.md`](Servers/Robin.md) |
-| `merle` | The rover. Tier 0 reflexes, rover-local skills, the actuator-owning service. Also hosts three house-repo services | [`Servers/Merle.md`](Servers/Merle.md) |
+| `robin` | MCC v2 host and robotics lab. Supervisor, recorder, notebook, Tier 3 gateway, Tier 1 Coral inference | `toddtech-infrastructure/servers/Robin.md` (private) |
+| `merle` | The rover. Tier 0 reflexes, rover-local skills, the actuator-owning service. Also hosts three house-repo services | `toddtech-infrastructure/servers/Merle.md` (private) |
 | `bluejay` | Tier 2. GPU skills and local language models | Private house repo |
 
 The message broker, DNS, the NVR, and the household services live on other
