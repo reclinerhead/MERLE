@@ -114,6 +114,7 @@ live in [`docs/design/`](docs/design/).
 | [`TechnicalGuide.md`](TechnicalGuide.md) | The living guide. Hub, with spokes under `docs/guide/`. Read the relevant section before starting work. |
 | [`docs/design/mcc/`](docs/design/mcc/) | The MCC v2 dashboard design reference: palette, layout, information design, and the mapping from screen regions to panel types. |
 | [`docs/design/helm-cockpit-first-draft.md`](docs/design/helm-cockpit-first-draft.md) | The first-draft design record for rover control and the actuator-owning service. |
+| [`docs/design/rover-idea-bank.md`](docs/design/rover-idea-bank.md) | The pre-MERLE rover brainstorm, where the layered-control ideas started. |
 | [`docs/guide/`](docs/guide/) | Component documentation, one spoke per component. |
 | [`Servers/`](Servers/) | Ops runbooks and the deploy watcher. |
 

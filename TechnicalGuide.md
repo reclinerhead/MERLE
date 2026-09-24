@@ -54,7 +54,7 @@ implementation detail.
 | Host | Role | Runbook |
 |---|---|---|
 | `robin` | MCC v2 host and robotics lab. Supervisor, recorder, notebook, Tier 3 gateway, Tier 1 Coral inference | [`Servers/Robin.md`](Servers/Robin.md) |
-| `merle` | The rover. Tier 0 reflexes, rover-local skills, the actuator-owning service | Private house repo |
+| `merle` | The rover. Tier 0 reflexes, rover-local skills, the actuator-owning service. Also hosts three house-repo services | [`Servers/Merle.md`](Servers/Merle.md) |
 | `bluejay` | Tier 2. GPU skills and local language models | Private house repo |
 
 The message broker, DNS, the NVR, and the household services live on other
@@ -107,6 +107,7 @@ moves nothing on screen.
 |---|---|
 | [`docs/design/mcc/`](docs/design/mcc/) | The MCC v2 dashboard design reference. Palette, layout, information design, and the mapping from screen regions to panel types |
 | [`docs/design/helm-cockpit-first-draft.md`](docs/design/helm-cockpit-first-draft.md) | First-draft design record for rover control, superseded in places by the issue tracker |
+| [`docs/design/rover-idea-bank.md`](docs/design/rover-idea-bank.md) | Pre-MERLE brainstorm for the rover: control layering, failsafe ladder, sensors, boundary options, and the chassis choice |
 
 Design records are historical artifacts, captured at a moment. This guide is
 the current state. Where the two disagree, the guide wins, and where the guide
