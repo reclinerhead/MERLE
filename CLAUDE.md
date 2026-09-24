@@ -67,6 +67,12 @@ its unit file, never by editing the script. Note that a later `Environment=`
 line replaces an earlier one wholesale rather than appending, so a drop-in that
 adds a unit must restate the full list.
 
+**The runbooks live in the private infrastructure repo.** `reclinerhead/toddtech-infrastructure`
+holds one runbook per box (`servers/<Host>.md`), robin and merle included, and is
+the single source of truth for hardware, addresses, and what runs where. Read
+the relevant runbook there before touching a machine. `Servers/` here holds
+only the deploy watcher.
+
 **This repo is public.** Do not commit addresses, MAC addresses, network
 reservations, personal names, or anything that identifies a physical location.
 Machine hostnames are fine. When a runbook needs private detail, it lives in the

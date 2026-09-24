@@ -12,7 +12,7 @@
 > project's**, not MERLE's. **Names of other machines and projects** refer to
 > the house fleet. **The issue tracker and the technical guide supersede it**
 > wherever they disagree. The current hardware is recorded in
-> [`Servers/Merle.md`](../../Servers/Merle.md).
+> `toddtech-infrastructure/servers/Merle.md` (private).
 
 ---
 Project Squirrel — Ideas & Horizon Backlog ("merle-someday")
