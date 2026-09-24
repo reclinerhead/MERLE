@@ -9,13 +9,16 @@
 > **State:** nothing merged yet.
 
 Nothing to document yet. The design record is the epic in the issue tracker and
-the [first-draft design document](../design/helm-cockpit-first-draft.md).
+the [first-draft design document](../design/helm-cockpit-first-draft.md). The
+hardware this service will own (the driver board's serial protocol, which
+fields it streams, what the Pi can measure about itself, and the vendor stack
+it replaces) is recorded in [`Servers/Merle.md`](../../Servers/Merle.md).
 
 ## The two hard constraints, before anyone touches the rover
 
 **The hardware service replaces the vendor stack rather than joining it.** The
 vendor's application continuously reads the robot's serial port and holds the
-camera exclusively. Two processes reading one serial port split the bytes
+camera and the lidar exclusively. Two processes reading one serial port split the bytes
 between them, and no streaming server can open a camera that another process
 already owns. So bringing up our own service is a cutover, and at cutover the
 vendor's web interface dies. That interface is currently the only way to drive
