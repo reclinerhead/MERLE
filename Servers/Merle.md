@@ -331,48 +331,90 @@ start logs `mixer OK -> (44100, -16, 2)`.
 ### NetworkManager, and the priority trap
 
 Since the reflash, Wi-Fi is managed by NetworkManager (`nmcli`), not
-`wpa_supplicant`. The known profiles, highest priority first:
+`wpa_supplicant`. Two client profiles, one for each place the rover works:
 
-| Profile | Priority | What |
+| Profile | For | Priority |
 |---|---|---|
-| Outdoor access point | 10 | The yard AP. The rover's normal home network |
-| Phone hotspot | 5 | For outings |
-| `preconfigured` | 0 | The house 2.4 GHz network, created by Pi OS imaging. The deliberate fallback |
+| Outdoor access point (`<outdoor-ap-profile>`) | The yard | 20 when outdoors, 10 when indoors |
+| `house-att` | Indoors: the house router's 2.4 GHz network | 20 when indoors, 10 when outdoors |
 
-Real profile names are in the private copy.
+Both are pinned to 2.4 GHz (`802-11-wireless.band bg`) with Wi-Fi power saving
+off (`802-11-wireless.powersave 2`). Both networks are the same house LAN, so
+the rover keeps its address and its name when it moves between them. The
+outdoor profile's real name is the access point's network name, which is in
+the private copy. The old `preconfigured` profile from Pi OS imaging and a
+phone-hotspot profile were deleted in August 2026; `house-att` replaced the
+former on 2026-09-24.
 
-NetworkManager does **not** roam between different networks on its own. Once
-connected, it stays until that network drops. At equal priority, any blip (the
-rover booting before the yard AP is up, a weak moment, the AP rebooting) makes
-merle grab `preconfigured` and stay there, which looks exactly like a failing
-yard AP when the AP is fine. That cost an hour of AP troubleshooting on
-2026-07-21. The fix is the priority column above:
+**Switching is two scripts on the rover**, one per place:
 
 ```
-sudo nmcli connection modify <outdoor-ap-profile> connection.autoconnect-priority 10
+~/scripts/wifi-inside.sh      # the house network, for indoor use
+~/scripts/wifi-outside.sh     # the yard access point
+```
+
+Each one scans first and changes nothing if its network is not in range. If it
+is, the script makes that profile priority 20 and the other 10, so the choice
+also survives a reboot, then switches after 3 seconds through `systemd-run` so
+the switch completes even though it drops the ssh session that ran it.
+Reconnect with `ssh todd@merle`. If the switch fails, NetworkManager
+autoconnects to whichever known network is in range. Run for the network the
+rover is already on, a script only re-applies the priorities. The scripts live
+on the rover only, not in this repo.
+
+**Why priorities, not just `connection up`.** NetworkManager does **not** roam
+between different networks on its own. Once connected, it stays until that
+network drops. At equal priority, any blip (the rover booting before the yard AP
+is up, a weak moment, the AP rebooting) lets merle grab the other network and
+stay there, which looks exactly like a failing access point when the AP is fine.
+That cost an hour of troubleshooting on 2026-07-21. A one-off `connection up`
+without the priority swap loses to that trap at the next reboot.
+
+Checking what it is actually on:
+
+```
+nmcli -t -f NAME,DEVICE connection show --active | grep wlan0
 nmcli -f NAME,AUTOCONNECT-PRIORITY connection show
+tail -1 /proc/net/wireless                        # signal, in dBm (third column)
 ```
 
-Check what it is actually on, and force a switch:
+`iwgetid` and `iw` are not installed on Lite; `nmcli` and `/proc/net/wireless`
+cover everything they would.
+
+**Power saving takes effect on the next activation.** Changing
+`802-11-wireless.powersave` on the live profile is refused by
+`nmcli device reapply`. Reactivate the profile instead, detached so it
+survives the ssh drop:
+`sudo systemd-run --collect --on-active=2 nmcli connection up house-att`.
+
+**Adding a network.** Create the profile first, then set the password on a
+line that starts with a space, so it stays out of shell history
+(`HISTCONTROL=ignoreboth` is the Pi OS default):
 
 ```
-nmcli -f NAME,DEVICE connection show --active
-iwgetid -r                                        # the live network name
-sudo nmcli connection up <outdoor-ap-profile>
+sudo nmcli connection add type wifi con-name <name> ifname wlan0 ssid "<network>" \
+    802-11-wireless.band bg wifi-sec.key-mgmt wpa-psk connection.autoconnect-priority 10
+ sudo nmcli connection modify <name> wifi-sec.psk "<password>"
 ```
 
-Adding a network later: `sudo nmcli device wifi connect "<name>" password
-"<password>"`, then set its priority. **Never delete `preconfigured`.** A rover
-with zero known networks is a rover you plug a keyboard into.
+**Never leave the rover with a single known network** it might not be able to
+see. A rover with zero reachable networks is a rover you plug a keyboard into.
 
-### The rover's own access point: not working
+### The rover's own access point: unverified
 
 The vendor installer left `AccessPopup` under `~/ugv_rpi`, whose job is to raise
-the Pi's own access point when no known network is in range. Observed state:
-`AccessPopup` inactive, `hostapd` masked, `dnsmasq` enabled. On the first real
-outing (2026-08-02) it did not come up, and it has not been verified working
-since. AccessPopup's default AP address is `192.168.50.5`; that is unverified on
-this box.
+the Pi's own access point when no known network is in range. On the first real
+outing (2026-08-02) it did not come up. It was reworked on 2026-08-03 and has
+not been verified since. Observed state (2026-09-24):
+
+- `/usr/bin/accesspopup`, run by `AccessPopup.timer` (enabled). The
+  `AccessPopup.service` it triggers shows `inactive` between runs, which is
+  normal for a timer-driven service.
+- An `AccessPopup` NetworkManager profile: access-point mode, `shared` IPv4,
+  WPA2 (RSN, CCMP), autoconnect off. Its network name is in the private copy.
+- AccessPopup's default AP address is `192.168.50.5`, unverified on this box.
+
+Treat it as untested until a walk out of range shows it coming up.
 
 What that outing taught, because it will bite any mission that leaves the yard:
 
@@ -452,20 +494,21 @@ Three virtual environments on the box, three jobs, zero shared imports:
 `~/project-squirrel/venv` (Jim). A leftover `~/spike-venv` from the benchmark is
 safe to delete.
 
-Left behind by Field Mode, to remove with it: 14 recorded sessions (about
-589 MB, never imported anywhere) under `~/field-sessions/`, and a sudoers entry
-at `/etc/sudoers.d/fieldmode-clock` that lets `todd` run `/usr/bin/date -s @*`
-without a password. Decide what happens to the recordings before deleting
-anything.
+Left behind by Field Mode, to remove with it: the now-empty
+`~/field-sessions/` directory (its 14 test and outing recordings were deleted on
+2026-09-24, never imported), and a sudoers entry at
+`/etc/sudoers.d/fieldmode-clock` that lets `todd` run `/usr/bin/date -s @*`
+without a password.
 
 ---
 
 ## Day-to-day
 
 `ssh todd@merle`. Never bare `ssh merle`, which tries the wrong user and hangs.
-If it times out, check whether the rover is on the charger or out past the yard
-AP before suspecting software. If it is up but on the wrong network, see
-§ Wi-Fi and networking.
+If it times out, check whether the rover is on the charger or out of range of
+its network before suspecting software. Moving it indoors or out? Run
+`~/scripts/wifi-inside.sh` or `~/scripts/wifi-outside.sh` first (see
+§ Wi-Fi and networking).
 
 ```
 systemctl status ugv                  # green dot = rover is drivable
@@ -504,13 +547,17 @@ Two fleet-wide changes landed on 2026-09-06 while merle was powered off, and
 
 Do both on the next visit when the rover is up.
 
+`~/.bash_history` on the rover still holds the yard access point's Wi-Fi
+password in plain text, from the July `nmcli device wifi connect` lines. Scrub
+those lines.
+
 ---
 
 ## Still open
 
 - **Phase the house project off the box.** Remove `fieldmode`,
-  `narrator-jim`, and the house `merle-autodeploy`; the Field Mode recordings
-  and sudoers entry; the house checkout and its deploy key; and the house
+  `narrator-jim`, and the house `merle-autodeploy`; the empty
+  `~/field-sessions/` and the Field Mode sudoers entry; the house checkout and its deploy key; and the house
   venvs (`~/field-venv`, `~/spike-venv`, and the one inside the checkout).
   `~/ugv_rpi/ugv-env` stays. Removing the house watcher frees the `merle-autodeploy` name,
   which this repo's watcher takes when MERLE code first lands here.
