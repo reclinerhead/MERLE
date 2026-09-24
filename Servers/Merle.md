@@ -206,7 +206,7 @@ model belongs on Tier 2.
 |---|---|---|---|---|
 | Rover | `ugv` | `5000` | Vendor | Waveshare web UI and driver-board bridge: drive, lights, speed modes, camera stream. **The only control path today** |
 | Field Mode | `fieldmode` | `8080` | House repo | **Retired**, still installed. Standalone audio recording sessions at a park, with a phone viewfinder |
-| Jim | `narrator-jim` | none | House repo | A narration persona that talks only to the message broker |
+| Jim | `narrator-jim` | none | House repo | **Parked**: stopped, disabled, and blocked from starting. A narration persona that talks only to the message broker |
 | Deploys | `merle-autodeploy` | none | House repo | The **house** deploy watcher, restarting the two units above |
 
 Nothing from this repo is deployed here yet. The house-repo rows are being
@@ -432,6 +432,15 @@ ported. What Field Mode taught is worth carrying into that design:
   port. That is still the only safe way to read it before cutover.
 - **Measured on this rover**, a bird-sound model classified every 3 s window in
   about 1.1 s at roughly half a watt (see § Measured compute and power).
+
+**Jim is parked** (2026-09-24), not removed. The unit is disabled, and a
+drop-in at `/etc/systemd/system/narrator-jim.service.d/parked.conf` adds a
+start condition on a file that does not exist, so any start or restart is a
+successful no-op. That matters because the house deploy watcher restarts Jim
+on every merge, and a plain `systemctl restart` starts a stopped unit. Masking
+does not work here: the unit file lives directly in `/etc/systemd/system`. To
+bring Jim back, delete the drop-in directory, `daemon-reload`, and
+`enable --now`.
 
 The house deploy watcher runs `/home/todd/project-squirrel/Servers/autodeploy.sh`
 with `MERLE_DEPLOY_UNITS="narrator-jim fieldmode"`. The vendor stack is
