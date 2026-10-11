@@ -54,7 +54,7 @@ implementation detail.
 | Host | Role | Runbook |
 |---|---|---|
 | `robin` | MCC v2 host and robotics lab. Supervisor, recorder, notebook, Tier 3 gateway, Tier 1 Coral inference | `toddtech-infrastructure/servers/Robin.md` (private) |
-| `merle` | The rover. Tier 0 reflexes, rover-local skills, the actuator-owning service. Also hosts three house-repo services | `toddtech-infrastructure/servers/Merle.md` (private) |
+| `merle` | The rover. Tier 0 reflexes, rover-local skills, the actuator-owning service. Also hosts three house-repo services and the battery bridge for the house health dashboard | `toddtech-infrastructure/servers/Merle.md` (private) |
 | `bluejay` | Tier 2. GPU skills and local language models | Private house repo |
 
 The message broker, DNS, the NVR, and the household services live on other
@@ -100,6 +100,7 @@ moves nothing on screen.
 |---|---|
 | [`docs/guide/platform.md`](docs/guide/platform.md) | Contracts, supervisor, recorder, notebook, panels |
 | [`docs/guide/helm.md`](docs/guide/helm.md) | Rover control and the actuator-owning service |
+| [`docs/guide/beszel-battery.md`](docs/guide/beszel-battery.md) | The pack-voltage bridge from the vendor feed to the house health dashboard's battery column |
 
 ## Design records
 
