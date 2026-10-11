@@ -115,13 +115,17 @@ def main():
     signal.signal(signal.SIGINT, stop)
 
     shown = False
+    unavailable_logged = False  # one line per outage, not one per retry
     while not stopping["now"]:
         if not sio.connected:
             try:
                 sio.connect(url, namespaces=["/ctrl"], transports=["polling"])
                 log.info("subscribed to the vendor feed at %s", url)
+                unavailable_logged = False
             except Exception as e:  # noqa: BLE001 - any failure here just means "try again later"
-                log.warning("vendor feed unavailable: %s", e)
+                if not unavailable_logged:
+                    log.warning("vendor feed unavailable at %s (%s); retrying every 5 s", url, type(e).__name__)
+                    unavailable_logged = True
 
         now = time.monotonic()
         if latest["cv"] is not None and now - latest["t"] <= stale_s:

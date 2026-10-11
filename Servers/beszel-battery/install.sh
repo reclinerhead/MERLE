@@ -9,6 +9,10 @@ for f in beszel_battery.py beszel-battery.service sys-class-power_supply.mount; 
 done
 # the Socket.IO client comes from Debian, on system Python; no venv, nothing from the vendor's
 python3 -c "import socketio" 2>/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q python3-socketio python3-requests
+# The unit drops every capability, so root is subject to plain file permissions and
+# must be able to traverse todd's home to reach the script. 701 = traverse, no list
+# (the same posture orchid uses for its Caddy). Pi OS creates the home as 700.
+chmod o+x /home/todd
 install -m 644 -o root -g root "$D/sys-class-power_supply.mount" /etc/systemd/system/sys-class-power_supply.mount
 install -m 644 -o root -g root "$D/beszel-battery.service" /etc/systemd/system/beszel-battery.service
 systemctl daemon-reload

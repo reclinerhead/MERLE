@@ -11,6 +11,8 @@ RestartSec=10
 
 # Runs as root only because its output lives under /sys; everything else is shut.
 # ProtectSystem=strict leaves /sys writable, which is the one thing it needs.
+# With no capabilities, root obeys plain permissions, so /home/todd must be
+# traversable (install.sh sets it to 701) or ExecStart fails with EACCES.
 CapabilityBoundingSet=
 NoNewPrivileges=yes
 ProtectSystem=strict
