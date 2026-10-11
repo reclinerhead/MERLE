@@ -1,0 +1,16 @@
+[Unit]
+Description=Fake power_supply class for the Beszel battery readout (MERLE Servers/beszel-battery)
+# The Pi has no power-supply devices, so this tmpfs hides an empty sysfs
+# directory and nothing else. The condition keeps it that way: if a real
+# battery or charger ever shows up here, the mount stands down and
+# beszel-battery.service (which Requires it) stays stopped.
+ConditionDirectoryNotEmpty=!/sys/class/power_supply
+
+[Mount]
+What=tmpfs
+Where=/sys/class/power_supply
+Type=tmpfs
+Options=size=1m,mode=755,nosuid,nodev,noexec
+
+[Install]
+WantedBy=multi-user.target

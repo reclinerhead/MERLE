@@ -1,0 +1,28 @@
+[Unit]
+Description=Rover pack voltage to the Beszel agent, as a battery (MERLE Servers/beszel-battery)
+Requires=sys-class-power_supply.mount
+After=sys-class-power_supply.mount network-online.target ugv.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/todd/MERLE/Servers/beszel-battery/beszel_battery.py
+Restart=always
+RestartSec=10
+
+# Runs as root only because its output lives under /sys; everything else is shut.
+# ProtectSystem=strict leaves /sys writable, which is the one thing it needs.
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
