@@ -31,15 +31,28 @@ battery appears and disappears without touching the agent.
 
 ## The percent scale is a readout, not a measurement
 
-Percent comes from the field checklist in the private merle runbook (12.6 V
-full, 11.1 V about half, 10.5 V start wrapping up, 10.2 V head home), with
-straight lines between the points and 9.6 V as zero. `status` is `Full` from
-12.5 V, `Charging` on a 0.05 V rise against a minute earlier, otherwise
-`Discharging`. These are cell-chemistry rules of thumb for a pack whose
-discharge curve under load has not been measured. The bridge gives the
-readout and the history; **no Beszel battery alert is enabled for merle**
-until a measured curve replaces the checklist. An invented threshold is an
-alarm you learn to ignore.
+The lower anchors come from the field checklist in the private merle runbook
+(11.1 V about half, 10.5 V start wrapping up, 10.2 V head home, 9.6 V as
+zero), read off this same board on real outings, with straight lines between
+the points. The top anchor is **what the board reports with the pack full and
+sitting on the charger: 12.20 to 12.25 V**, observed after weeks on the
+charger, not the textbook 12.6 V. Whether the board reads a few tenths low or
+the pack floats there, the readout is calibrated to the number the board
+produces; the default is 12.15 V (`MERLE_BATTERY_FULL_CV=1215`) and a
+multimeter against the pack is still the way to settle which it is.
+
+`status` is `Full` at the anchor and above, held with 0.15 V of hysteresis
+so a floating pack does not flicker, and `Full` always reads 100. The board
+exposes no charger flag, so a charge in progress is inferred: `Charging` on a
+0.05 V rise against a minute earlier, otherwise `Discharging`. A pack that
+is on the charger but already full therefore reads `Full`, not `Charging`,
+which is the truth.
+
+These are cell-chemistry rules of thumb for a pack whose discharge curve
+under load has not been measured. The bridge gives the readout and the
+history; **no Beszel battery alert is enabled for merle** until a measured
+curve replaces the checklist. An invented threshold is an alarm you learn to
+ignore.
 
 ## Verify
 

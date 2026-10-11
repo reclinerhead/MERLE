@@ -20,6 +20,7 @@ Configuration, all optional, from the environment:
   MERLE_UGV_VOLTAGE_KEY   feedback key for voltage    default 112
   MERLE_BATTERY_DIR       the fake battery directory  default /sys/class/power_supply/BAT0
   MERLE_BATTERY_STALE_S   seconds without a reading before BAT0 is withdrawn, default 30
+  MERLE_BATTERY_FULL_CV   the board's reading, in centivolts, that means full, default 1215
 """
 
 import collections
@@ -28,34 +29,52 @@ import os
 import signal
 import time
 
-# centivolts -> percent, from the runbook's field checklist; straight lines between
-CURVE = ((960, 0), (1020, 10), (1050, 20), (1110, 50), (1260, 100))
-FULL_CV = 1250  # with the charger on, the reading sits here and above
+# centivolts -> percent. The lower anchors are the runbook's field checklist, read off
+# this same board on real outings. The top anchor is what the board reports with the
+# pack full and sitting on the charger (12.20 to 12.25 V, observed 2026-10-11 after
+# weeks on the charger), not the textbook 12.6 V. Whether the board reads low or the
+# pack floats there, the readout has to be calibrated to the number the board produces.
+CHECKLIST = ((960, 0), (1020, 10), (1050, 20), (1110, 50))
+DEFAULT_FULL_CV = int(os.environ.get("MERLE_BATTERY_FULL_CV", "1215"))
+FULL_HYSTERESIS_CV = 15  # once Full, stay Full until the reading falls 0.15 V below the anchor
 RISE_CV = 5  # a 0.05 V rise against a minute ago reads as charging
 
 
-def percent_from_centivolts(cv):
-    """Map pack voltage in centivolts to 0..100 along CURVE, clamped at both ends."""
-    if cv <= CURVE[0][0]:
+def percent_from_centivolts(cv, full_cv=None):
+    """Map pack voltage in centivolts to 0..100 along the checklist, clamped at both ends."""
+    full_cv = DEFAULT_FULL_CV if full_cv is None else full_cv
+    curve = CHECKLIST + ((full_cv, 100),)
+    if cv <= curve[0][0]:
         return 0
-    if cv >= CURVE[-1][0]:
+    if cv >= curve[-1][0]:
         return 100
-    for (lo_cv, lo_pct), (hi_cv, hi_pct) in zip(CURVE, CURVE[1:]):
+    for (lo_cv, lo_pct), (hi_cv, hi_pct) in zip(curve, curve[1:]):
         if lo_cv <= cv <= hi_cv:
             return round(lo_pct + (hi_pct - lo_pct) * (cv - lo_cv) / (hi_cv - lo_cv))
     return 0
 
 
-def status_from(cv, cv_a_minute_ago):
-    """One of the sysfs status strings Beszel understands: Full, Charging, Discharging."""
-    if cv >= FULL_CV:
+def status_from(cv, cv_a_minute_ago, was_full=False, full_cv=None):
+    """One of the sysfs status strings Beszel understands: Full, Charging, Discharging.
+
+    The board exposes no charger flag, so Full is inferred from voltage, with hysteresis
+    so a pack floating at the anchor does not flicker between Full and Discharging."""
+    full_cv = DEFAULT_FULL_CV if full_cv is None else full_cv
+    if cv >= full_cv or (was_full and cv >= full_cv - FULL_HYSTERESIS_CV):
         return "Full"
     if cv_a_minute_ago is not None and cv - cv_a_minute_ago >= RISE_CV:
         return "Charging"
     return "Discharging"
 
 
-def write_battery(bat_dir, cv, status):
+def readout(cv, cv_a_minute_ago, was_full=False, full_cv=None):
+    """(status, percent) for one reading. Full always means 100."""
+    status = status_from(cv, cv_a_minute_ago, was_full, full_cv)
+    percent = 100 if status == "Full" else percent_from_centivolts(cv, full_cv)
+    return status, percent
+
+
+def write_battery(bat_dir, cv, status, percent):
     """Lay down the files Beszel's Linux reader looks for. Each write is a rename, so a
     reader never sees a half-written value."""
     os.makedirs(bat_dir, exist_ok=True)
@@ -64,7 +83,7 @@ def write_battery(bat_dir, cv, status):
         "present": "1",
         "model_name": "UGV pack",
         "status": status,
-        "capacity": str(percent_from_centivolts(cv)),
+        "capacity": str(percent),
         "voltage_now": str(cv * 10000),  # sysfs convention is microvolts
     }
     for name, value in values.items():
@@ -115,6 +134,7 @@ def main():
     signal.signal(signal.SIGINT, stop)
 
     shown = False
+    was_full = False
     unavailable_logged = False  # one line per outage, not one per retry
     while not stopping["now"]:
         if not sio.connected:
@@ -133,14 +153,16 @@ def main():
             while history and now - history[0][0] > 90:
                 history.popleft()
             minute_ago = next((cv for t, cv in history if now - t >= 55), None)
-            status = status_from(latest["cv"], minute_ago)
-            write_battery(bat_dir, latest["cv"], status)
+            status, percent = readout(latest["cv"], minute_ago, was_full)
+            was_full = status == "Full"
+            write_battery(bat_dir, latest["cv"], status, percent)
             if not shown:
-                log.info("battery shown: %.2f V, %s", latest["cv"] / 100, status)
+                log.info("battery shown: %.2f V, %s, %d%%", latest["cv"] / 100, status, percent)
                 shown = True
         elif shown or os.path.isdir(bat_dir):
             withdraw_battery(bat_dir)
             history.clear()
+            was_full = False
             log.info("no reading for %.0f s, battery withdrawn", stale_s)
             shown = False
 
